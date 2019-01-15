@@ -48,7 +48,7 @@ def main():
     conf = SparkConf().setAll([('spark.jars.packages', 'com.databricks:spark-xml_2.11:0.4.1')])
     spark = SparkSession.builder.appName("IMPC_ETL").config(conf=conf).getOrCreate()
     if os.path.exists('../tests/data/impress.parquet'):
-        impress_df = spark.read.parquet('../tests/data/impress_parquet')
+        impress_df = spark.read.parquet('../tests/data/impress.parquet')
     else:
         impress_api_url = 'http://sandbox.mousephenotype.org/impress/'
         impress_pipeline_type = 'pipeline'
@@ -57,9 +57,10 @@ def main():
     genes_df = extract_genes(spark, '../tests/data/imits/allele2Entries.tsv')
     alleles_df = extract_alleles(spark, '../tests/data/imits/allele2Entries.tsv')
     products_df = extract_products(spark, '../tests/data/imits/productEntries.tsv')
-    samples_df = extract_samples(spark, '../tests/data/*specimen.xml')
-    phenotyping_colonies_df = extract_phenotyping_colonies(spark, '../tests/data/imits/mp2_load_phenotyping_colonies_report.tsv')
-    load(genes_df, alleles_df, products_df, phenotyping_colonies_df, samples_df, None, impress_df)
+    # samp# les_df = extract_samples(spark, '../tests/data/*specimen.xml')
+    samples_df = extract_samples(spark, '../tests/data/*specimenMOD2.xml')
+    # phenotyping_colonies_df = extract_phenotyping_colonies(spark, '../tests/data/imits/mp2_load_phenotyping_colonies_report.tsv')
+    # load(genes_df, alleles_df, products_df, phenotyping_colonies_df, samples_df, None, impress_df)
 
 
 if __name__ == "__main__":

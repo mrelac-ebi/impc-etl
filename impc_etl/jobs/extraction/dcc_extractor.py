@@ -12,6 +12,9 @@ from typing import Tuple
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import explode, lit
 
+import xml.etree.ElementTree as ET
+import pandas as pd
+
 
 def extract_observations(spark_session: SparkSession,
                          file_path: str) -> Tuple[DataFrame, DataFrame]:
@@ -116,6 +119,12 @@ def extract_experiment_files(spark_session: SparkSession,
         .options(rowTag="experiment", samplingRatio="1").load(experiment_dir_path)
     return experiments_df
 
+def xml_2_df(spark_session: SparkSession, xml_dir_path: str):
+    tree = ET.parse(xml_dir_path)
+    root = tree.getRoot()
+    for child in root:
+        print(child.tag, child.attrib, child.text)
+
 
 def extract_samples(spark_session: SparkSession, specimen_dir_path: str) -> DataFrame:
     """
@@ -123,11 +132,53 @@ def extract_samples(spark_session: SparkSession, specimen_dir_path: str) -> Data
     :param spark_session:
     :param specimen_dir_path:
     :return:
+
+    Need:
+        datasourceShortName
+        CentreSpecimen df
+        Centre df
+        Specimen df
+        Mouse df
+        Embryo df
+        Pipeline df
+        Project df
+        StatusCode df
+        ColonyID df
+        Genotype df
+        ParentalStrain df (NOTHING TO DO, AS MYSQL TABLE IS EMPTY)
+        ChromosomalAlteration df (NOTHING TO DO, AS MYSQL TABLE IS EMPTY)
+        RelatedSpecimen df
+
+
+
+
+
+
+
     """
-    mice_df = spark_session.read.format("com.databricks.spark.xml") \
-        .options(rowTag="mouse").load(specimen_dir_path)
-    embryos_df = spark_session.read.format("com.databricks.spark.xml") \
-        .options(rowTag="embryo").load(specimen_dir_path)
-    mice_df = mice_df.withColumn('type', lit('Mouse')).withColumn('_stage', lit(None)).withColumn('_stageUnit', lit(None))
-    embryos_df = embryos_df.withColumn('type', lit('Embryo')).withColumn('_DOB', lit(None)).select(mice_df.schema.names)
-    return mice_df.unionAll(embryos_df)
+    tree = ET.parse("/Users/mrelac/workspace/py/impc-etl/tests/data/J.2018-10-05.9.specimenMOD2.xml")
+    centre_specimen_set = tree.getroot()
+    print(centre_specimen_set.tag, centre_specimen_set.attrib, centre_specimen_set.text)
+
+    d = []
+    col_names = ['datasourceShortName', 'project', 'phenotypingCentre', 'productionCentre', 'specimenID', 'colonyID', 'gender', 'isBaseline', 'litterId', 'strainID', 'zygosity', DATE_OF_STATUSCODE, STATUSCODE_VALUE, 'DOB', 'stage', 'stageUnit', MGI_GENE_ID, GENE_SYMBOL, MGI_ALLELE_ID, FATHER_ZYGOSITY, MOTHER_ZYGOSITY, RELATED_SPECIMEN_ID, RELATED_SPECIMEN_RELATIONSHIP ]
+    specimen_df = pd.DataFrame(columns = col_names)
+
+    for centre in centre_specimen_set:
+        print(centre.tag, centre.attrib, centre.text)
+
+        inner = {}
+
+        for child in centre:
+            print (child.tag, child.attrib, child.text)
+
+            if (child.tag == 'embryo'):
+                inner[child.tag]
+
+    # mice_df = spark_session.read.format("com.databricks.spark.xml") \
+    #     .options(rowTag="mouse", mode="DROPMALFORMED").load(specimen_dir_path)
+    # embryos_df = spark_session.read.format("com.databricks.spark.xml") \
+    #     .options(rowTag="embryo", mode="DROPMALFORMED").load(specimen_dir_path)
+    # mice_df = mice_df.withColumn('type', lit('Mouse')).withColumn('_stage', lit(None)).withColumn('_stageUnit', lit(None))
+    # embryos_df = embryos_df.withColumn('type', lit('Embryo')).withColumn('_DOB', lit(None)).select(mice_df.schema.names)
+    # return mice_df.unionAll(embryos_df)
